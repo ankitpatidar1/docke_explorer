@@ -8,7 +8,7 @@ WORKDIR /opt/services/djangoapp/src
 
 COPY requirements.txt ./
 
-RUN pip install pipenv && pipenv install --system
+RUN pip install -r requirements.txt
 
 COPY . /opt/services/djangoapp/src
 
