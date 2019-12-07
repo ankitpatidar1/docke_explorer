@@ -1,26 +1,53 @@
 version: '3'
 
 services:
-  db:
-    image: postgres
-  web:
-    image: lern:v2
+
+  # database containers, one for each db
+  database:
+    image: postgres:10
     volumes:
-      - mylund:/usr/src/app
-    ports:
-      - "8000:8000"
+      - db_volume:/var/lib/postgresql/data
+    env_file:
+      - config/db/database1_env
+    networks:
+      - db_network
+
+  # web container, with django + gunicorn
+  djangoapp:
+    build: .
+    environment:
+      - DJANGO_SETTINGS_MODULE
+    volumes:
+      - .:/opt/services/djangoapp/src
+      - static:/opt/services/djangoapp/static
+      - media:/opt/services/djangoapp/media
+    networks:
+      - db_network
+      - nginx_network
     depends_on:
-      - db
-  # mysql:
-  #   image: mysql:5.7.22
-  #   container_name: spa_mysql
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_USER: root
-  #     MYSQL_ROOT_PASSWORD: 111
-  #     MYSQL_DATABASE: spa_app
-  #   ports:
-  #     - "3307:3306"
+      - database
+
+  # reverse proxy container (nginx)
+  nginx:
+    image: nginx:1.13
+    ports:
+      - 8000:80
+    volumes:
+      - ./config/nginx/conf.d:/etc/nginx/conf.d
+      - static:/opt/services/djangoapp/static
+      - media:/opt/services/djangoapp/media
+    networks:
+      - nginx_network
+    depends_on:
+      - djangoapp
+
+networks:
+  db_network:
+    driver: bridge
+  nginx_network:
+    driver: bridge
 
 volumes:
-  mylund:
+  db_volume:
+  static:
+  media:

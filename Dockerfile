@@ -1,13 +1,19 @@
 FROM python:3.6
 
-RUN mkdir -p /usr/src/app
+ENV PYTHONUNBUFFERED 1
 
-WORKDIR /usr/src/app
+RUN mkdir -p /opt/services/djangoapp/src
+
+WORKDIR /opt/services/djangoapp/src
 
 COPY requirements.txt ./
-COPY requirements.txt /code/
-RUN pip install --no-cache-dir -r ./requirements.txt
+
+RUN pip install pipenv && pipenv install --system
+
+COPY . /opt/services/djangoapp/src
 
 CMD python manage.py makemigrations
+
 CMD python manage.py migrate
+
 CMD ["python","manage.py","runserver","0.0.0.0:8000"]
